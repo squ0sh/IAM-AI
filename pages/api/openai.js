@@ -35,8 +35,9 @@ export default async (req, res) => {
 
 
   // Log promt
-//  console.log(prompt);
+  console.log(prompt);
 
 
   res.status(200).json({ text: `${gptResponse.data.choices[0].text}`
  });
+
