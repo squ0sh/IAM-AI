@@ -1,37 +1,48 @@
-const OpenAI = require("openai-api");
-const openai = new OpenAI(process.env.OPENAI_API_KEY);
+import OpenAI from "openai";
 
-export default async (req, res) => {
-  // Promt values
-  const beforePromt = ``;
-  const afterPromt = ``;
-  const breakPoint = `\n\n'''\n\n`;
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 
-  // Construct the prompt
-  let prompt = `${beforePromt} ${breakPoint} ${req.body.name} ${breakPoint} ${afterPromt}`;
+export default async function handler(req, res) {
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Method not allowed" });
+  }
 
+  try {
+    const { name } = req.body;
 
-  // Log promt
-  console.log(prompt);
+    if (!name) {
+      return res.status(400).json({ error: "Missing prompt" });
+    }
 
+    // Prompt construction (kept compatible with your frontend)
+    const beforePrompt = "";
+    const afterPrompt = "";
+    const breakPoint = "\n\n'''\n\n";
 
-  
+    const prompt = `${beforePrompt}${breakPoint}${name}${breakPoint}${afterPrompt}`;
 
+    console.log("PROMPT:", prompt);
 
-  // Call OpenAI API
-  const gptResponse = await openai.complete({
-    engine: "davinci-002",
-    prompt: `${prompt}`,
-    maxTokens: 1500,
-    temperature: 0.7,
-    topP: 1,
-    presencePenalty: 0,
-    frequencyPenalty: 0.5,
-    bestOf: 1,
-    n: 1,
-  });
+    // OpenAI call (modern API)
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "user",
+          content: prompt,
+        },
+      ],
+      temperature: 0.7,
+      max_tokens: 1500,
+    });
 
-  res.status(200).json({ text: `${gptResponse.data.choices[0].text}` });
-};
-// model: "text-davinci-002",
-// prompt: "Write a long form social media post based on this Content that will engage a reader into conversation, include a summary of the Content",
+    res.status(200).json({
+      text: completion.choices[0].message.content,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "OpenAI request failed" });
+  }
+}
