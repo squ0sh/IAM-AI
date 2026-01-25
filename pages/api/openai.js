@@ -14,7 +14,7 @@ const response = await client.responses.create({
             content: "Are semicolons optional in JavaScript?",
         },
     ],
-});
+}),
 
 console.log(response.output_text);
 
