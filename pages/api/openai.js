@@ -4,6 +4,11 @@ export default async function handler(req, res) {
   }
 
   try {
+    if (!process.env.OPENAI_API_KEY) {
+      console.error("OPENAI_API_KEY is missing");
+      return res.status(500).json({ error: "Server misconfiguration" });
+    }
+
     const { name } = req.body;
 
     if (!name) {
@@ -18,29 +23,26 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify({
         model: "gpt-4o-mini",
-        messages: [
-          {
-            role: "user",
-            content: name,
-          },
-        ],
+        messages: [{ role: "user", content: name }],
         temperature: 0.7,
         max_tokens: 1500,
       }),
     });
 
-    const data = await response.json();
+    const raw = await response.text();
+    console.log("OpenAI raw response:", raw);
 
     if (!response.ok) {
-      console.error(data);
-      return res.status(500).json({ error: "OpenAI API error" });
+      return res.status(500).json({ error: raw });
     }
+
+    const data = JSON.parse(raw);
 
     res.status(200).json({
       text: data.choices[0].message.content,
     });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Server error" });
+    console.error("API ROUTE ERROR:", error);
+    res.status(500).json({ error: error.message });
   }
 }
